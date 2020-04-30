@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/main2">
+        <file>img/equipement.png</file>
+    </qresource>
+</RCC>

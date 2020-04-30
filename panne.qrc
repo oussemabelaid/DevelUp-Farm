@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/main3">
+        <file>img/panne.png</file>
+    </qresource>
+</RCC>

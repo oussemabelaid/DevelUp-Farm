@@ -1,62 +1,72 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-#include "vaccin.h"
-#include "veterinaire.h"
+#include "equipement.h"
+#include "panne.h"
 #include <QMainWindow>
-#include <QSystemTrayIcon>
 
-namespace Ui {
-class MainWindow;
-}
+QT_BEGIN_NAMESPACE
+namespace Ui { class MainWindow; }
+QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
-    void on_pb_ajouter_clicked();
+    void on_pb_ajouter_equipement_clicked();
 
-    void on_pb_supprimer_clicked();
+    void on_pb_supprimer_equipement_clicked();
 
-    void on_pb_ajoutervet_clicked();
+    void on_pb_ajouter_panne_clicked();
 
-    void on_pushButton_supp_clicked();
+    void on_pb_supprimer_panne_clicked();
 
-   // void on_pb_load_clicked();
+    void on_pb_modifier_equipement_clicked();
 
+    void on_pb_modifier_panne_clicked();
 
-    //void on_pb_modifier_clicked();
+    void on_comboBox_3_currentIndexChanged(int index);
 
-   // void on_comboBoxupdate_currentIndexChanged(int);
+    void on_pb_charger_equipement_clicked();
 
-    void on_pb_modifier_clicked();
+    void on_pb_charger_panne_clicked();
 
-    void on_pushButton_2_clicked();
+    void on_comboBox_4_currentIndexChanged(int index);
+    
+    void on_comboBox_5_currentIndexChanged(int index);
 
-    void on_pb_ask_clicked();
+    void on_printe_clicked();
 
-    void on_pb_decr_clicked();
+    void on_printp_clicked();
 
-    void on_pb_d2desc_clicked();
+    void on_radioButton_clicked();
 
-    void on_pb_d2asc_clicked();
+    void on_radioButton_8_clicked();
 
-    void on_rechercher_clicked();
+    void on_radioButton_2_clicked();
 
+    void on_radioButton_3_clicked();
 
-    void on_pushButton_clicked();
+    void on_radioButton_4_clicked();
 
-    void on_tabvaccin_activated(const QModelIndex &index);
+    void on_radioButton_5_clicked();
+
+    void on_radioButton_6_clicked();
+
+    void on_radioButton_7_clicked();
+
+    void on_lineEdit_textChanged(const QString &arg1);
+
+    void on_lineEdit_2_textChanged(const QString &arg1);
 
 private:
     Ui::MainWindow *ui;
-    Vaccin tmpvaccin;
-    Veterinaire tmpvet;
-    QSystemTrayIcon *mysystem;
-};
+    Equipement tmpequipement;
+    Panne tmppanne;
 
+};
 #endif // MAINWINDOW_H

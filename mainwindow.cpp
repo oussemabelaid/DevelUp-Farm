@@ -1,341 +1,398 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "vaccin.h"
-#include "veterinaire.h"
+#include "equipement.h"
+#include "panne.h"
 #include <QMessageBox>
 #include <QComboBox>
 #include <QDebug>
-#include <QSqlQuery>
-#include <QDate>
+#include <QPixmap>
+#include <QPrinter>
+#include <QDialog>
+#include <QPrintDialog>
+#include <QPainter>
+#include <QPaintEvent>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
 {
-ui->setupUi(this);
-    mysystem=new QSystemTrayIcon(this);
-    mysystem->setIcon(QIcon(":/farmer.ico"));
-    mysystem->setVisible(true);
-    ui->tabvaccin->setModel(tmpvaccin.afficher());
-    ui->tabvet->setModel(tmpvet.affichervet());
-    ui->linee->setPlaceholderText("Type");
-    ui->lineEdit_idd->setPlaceholderText(("Id "));
-
+    QString windowTitle("DevelUp Farm");
+    ui->setupUi(this);
+    setWindowIcon(QIcon(":/main1/img/zvenden.png"));
+    this->setWindowTitle(windowTitle);
+    QPixmap pix2(":/main1/img/equipement.png");
+    int w2 = ui->label_pic2->width();
+    int h2 = ui->label_pic2->height();
+    ui->label_pic2->setPixmap(pix2.scaled(w2,h2,Qt::KeepAspectRatio));
+    QPixmap pix3(":/main1/img/panne.png");
+    int w3 = ui->label_pic3->width();
+    int h3 = ui->label_pic3->height();
+    ui->label_pic3->setPixmap(pix3.scaled(w3,h3,Qt::KeepAspectRatio));
+    ui->tabequipement->setModel(tmpequipement.afficher());
+    ui->comboBox_3->setModel(tmpequipement.afficher());
+    ui->comboBox_5->setModel(tmpequipement.afficherI());
+    ui->comboBox_4->setModel(tmppanne.afficher());
+    ui->tabpanne->setModel(tmppanne.afficher());
+    ui->tabequipement->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tabpanne->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
-//vaccin
-//**************************************************************************************
-//Ajout vaccin
-void MainWindow::on_pb_ajouter_clicked()
+
+
+void MainWindow::on_pb_ajouter_equipement_clicked()
 {
-    QString type= ui->comboBoxtype->currentText();
-    QDate datev= ui->dateEdit->date();
-    int nb= ui->box_nb->text().toInt();
-    QDate datevv= ui->dateEdit2->date();
-
-
-  Vaccin v(type,nb,datev,datevv);
-  bool test=v.ajouter();
-
-  if(test)
-{
-
-      ui->tabvaccin->setModel(tmpvaccin.afficher());//refresh
-QMessageBox::information(nullptr, QObject::tr("Ajouter un vaccin"),
-                  QObject::tr("Vaccin ajouté.\n"
-                              "Click Cancel to exit."), QMessageBox::Cancel);
-      mysystem->showMessage(tr("notification"),tr("Ajout avec succes"));
-
-
-}
-  else
-      QMessageBox::critical(nullptr, QObject::tr("Ajouter un vaccin"),
-                  QObject::tr("Erreur !.\n"
-                              "Click Cancel to exit."), QMessageBox::Cancel);
-
-
-}
-//modif vaccin
-void MainWindow::on_pb_modifier_clicked()
-{
-        int id= ui->lineEdit->text().toInt();
-        QString type= ui->comboBoxtype->currentText();
-        QDate datev= ui->dateEdit->date();
-        int nb= ui->box_nb->text().toInt();
-        QDate datevv= ui->dateEdit2->date();
-
-
-      Vaccin v(type,nb,datev,datevv);
-      bool test=v.modifier(id);
-
+    int numserie= ui->lineEdit_numserie->text().toInt();
+        QString type= ui->comboBox_2->currentText();
+        QString marque= ui->lineEdit_marque->text();
+        QString disponibilite= ui->comboBox->currentText();
+      Equipement e(numserie,type,marque,disponibilite);
+      bool test=e.ajouter();
       if(test)
     {
 
-          ui->tabvaccin->setModel(tmpvaccin.afficher());//refresh
-    QMessageBox::information(nullptr, QObject::tr("Modifier un vaccin"),
-                      QObject::tr("Vaccin Modifié.\n"
-                                  "Click Cancel to exit."), QMessageBox::Cancel);
-
+    ui->tabequipement->setModel(tmpequipement.afficher());//refresh
+    ui->comboBox_3->setModel(tmpequipement.afficher());//refresh
+     ui->comboBox_5->setModel(tmpequipement.afficherI());//refresh
+    QMessageBox::information(nullptr, QObject::tr("Ajouter un Equipement"),
+                      QObject::tr("Equipement ajouté.\n"
+                                  "Clicker sur Sortir pour quitter."), QMessageBox::Cancel);
 
     }
       else
-          QMessageBox::critical(nullptr, QObject::tr("Modifier un vaccin"),
+          QMessageBox::critical(nullptr, QObject::tr("Ajouter un equipement"),
                       QObject::tr("Erreur !.\n"
-                                  "Click Cancel to exit."), QMessageBox::Cancel);
-
-
-
-
+                                  "Clicker sur Sortir pour quitter."), QMessageBox::Cancel);
 }
 
-//supp vaccin
-void MainWindow::on_pb_supprimer_clicked()
+void MainWindow::on_pb_supprimer_equipement_clicked()
 {
-Vaccin v;
-       QItemSelectionModel *select = ui->tabvaccin->selectionModel();
-       QModelIndexList list;
-       if(select->hasSelection())
-       list=select->selectedRows();
-       for(int i=0; i< list.count(); i++)
-       {
-       QMessageBox::StandardButton reply;
-       reply = QMessageBox::question(this, "Supprimer Vaccin", "Vous etes sure?",
-                                     QMessageBox::Yes|QMessageBox::No);
-       if (reply == QMessageBox::Yes) {
-           v.supprimer(list[i].data().toInt());
-           ui->tabvaccin->setModel(v.afficher());
-           QMessageBox::information(nullptr, QObject::tr("Supprimer un Vaccin"),
-           QObject::tr("Vaccin supprimée.\n"
-           "Click Cancel to exit."), QMessageBox::Cancel);}}}
-
-//veterinaire
-//****************************************************************
-//Ajout vet
-void MainWindow::on_pb_ajoutervet_clicked()
-{
-
-    QString nom= ui->lineEdit_nom->text();
-    QString prenom= ui->lineEdit_prenom->text();
-    int prix= ui->SpinBox_prix->text().toInt();
-    QString numtele= ui->lineEdit_numtele->text();
-    QString adresse= ui->lineEdit_adresse->text();
-    QString email= ui->lineEdit_email->text();
-    QString dispo=ui->comboBox_dispo->currentText();
-
-
-  Veterinaire vet(nom,prenom,prix,numtele,adresse,email,dispo);
-
-   if( numtele.length()==8)
-      {
-      if(vet.ajoutervet())
-          {
-                      ui->tabvet->setModel(tmpvet.affichervet());//refresh
-                QMessageBox::information(nullptr, QObject::tr("Ajouter un veterinaire"),
-                      QObject::tr("veterinaire ajouté.\n"
-                                  "Click Cancel to exit."), QMessageBox::Cancel);
-        }
-      else
-          QMessageBox::critical(nullptr, QObject::tr("Ajouter un veterinaire"),
-                      QObject::tr("Erreur !.\n"
-                                  "Click Cancel to exit."), QMessageBox::Cancel);
-  }
-  else
-  {
-      QMessageBox::critical(nullptr, QObject::tr("Nume telephone "),
-                  QObject::tr("Erreur !.\n"
-                              "Numéro de téléphone doit égale à 8 chiffres."), QMessageBox::Cancel);
-  }
-
-}
-
-
-//supp vet
-void MainWindow::on_pushButton_supp_clicked()
-{
-Veterinaire vet;
-       QItemSelectionModel *select = ui->tabvet->selectionModel();
-       QModelIndexList list;
-       if(select->hasSelection())
-       list=select->selectedRows();
-       for(int i=0; i< list.count(); i++)
-       {
-           vet.supprimervet(list[i].data().toInt());
-       }
-  ui->tabvet->setModel(vet.affichervet());
-
-}
-
-//modif vet
-void MainWindow::on_pushButton_2_clicked()
-{
-    QString nom= ui->lineEdit_nom->text();
-    QString prenom= ui->lineEdit_prenom->text();
-    int prix= ui->SpinBox_prix->text().toInt();
-    QString numtele= ui->lineEdit_numtele->text();
-    QString adresse= ui->lineEdit_adresse->text();
-    QString email= ui->lineEdit_email->text();
-    QString dispo=ui->comboBox_dispo->currentText();
-bool test;
-
-  Veterinaire vet(nom,prenom,prix,numtele,adresse,email,dispo);
-
-           QItemSelectionModel *select = ui->tabvet->selectionModel();
+    Equipement e;
+           QItemSelectionModel *select = ui->tabequipement->selectionModel();
            QModelIndexList list;
            if(select->hasSelection())
            list=select->selectedRows();
-           for(int i=0; i< list.count(); i++)
-           {
-                test=vet.modifiervet(list[i].data().toInt());
-                qDebug() << list[i].data().toInt();
-           }
+            for(int i=0; i< list.count(); i++){
 
-  if(test)
+                QMessageBox::StandardButton reply;
+            reply = QMessageBox::question(this, "Supprimer Equipement", "Vous etes sure?",
+                                          QMessageBox::Yes|QMessageBox::No);
+            if (reply == QMessageBox::Yes) {
+              e.supprimer(list[i].data().toInt());
+              ui->tabequipement->setModel(tmpequipement.afficher());//refresh
+              ui->comboBox_3->setModel(tmpequipement.afficher());
+              ui->comboBox_5->setModel(tmpequipement.afficherI());
+              QMessageBox::information(nullptr, QObject::tr("Supprimer un Equipement"),
+                                QObject::tr("Equipement supprimée.\n"
+                                            "Click Cancel to exit."), QMessageBox::Cancel);}}}
+
+
+void MainWindow::on_pb_ajouter_panne_clicked()
 {
+    // int numserie = ui->comboBox_5->currentIndex();
+    int id = ui->lineEdit_ID->text().toInt();
+       int numserie= ui->lineEdit_numseriep->text().toInt();
 
-      ui->tabvet->setModel(tmpvet.affichervet());//refresh
-QMessageBox::information(nullptr, QObject::tr("Modifier un vétérinaire"),
-                  QObject::tr("Vétérinaire modifié.\n"
-                              "Click Cancel to exit."), QMessageBox::Cancel);
+       int prix= ui->lineEdit_prix->text().toInt();
+       int duree= ui->lineEdit_duree->text().toInt();
+     Panne p(numserie,id,prix,duree);
+     bool test=p.ajouter();
+     if(test)
+   {
 
+   ui->tabpanne->setModel(tmppanne.afficher());//refresh
+   ui->comboBox_4->setModel(tmppanne.afficher());
+   QMessageBox::information(nullptr, QObject::tr("Ajouter une Panne"),
+                     QObject::tr("Panne ajouté.\n"
+                                 "Click Cancel to exit."), QMessageBox::Cancel);
+
+   }
+     else
+         QMessageBox::critical(nullptr, QObject::tr("Ajouter une Panne"),
+                     QObject::tr("Erreur !.\n"
+                                 "Click Cancel to exit."), QMessageBox::Cancel);
 
 }
-  else
-      QMessageBox::critical(nullptr, QObject::tr("modifier un vétérinaire"),
-                  QObject::tr("Erreur !.\n"
-                              "Click Cancel to exit."), QMessageBox::Cancel);
-}
 
-
-
-
-/*
-void MainWindow::on_pb_supprimer_clicked()
+void MainWindow::on_pb_supprimer_panne_clicked()
 {
-int id = ui->lineEdit_id_2->text().toInt();
-bool test=tmpvaccin.supprimer(id);
-if(test)
-{ui->tabvaccin->setModel(tmpvaccin.afficher());//refresh
-    QMessageBox::information(nullptr, QObject::tr("Supprimer un vaccin"),
-                QObject::tr("Vaccin supprimé.\n"
-                            "Click Cancel to exit."), QMessageBox::Cancel);
-
-}
-else
-    QMessageBox::critical(nullptr, QObject::tr("Supprimer un vaccin"),
-                QObject::tr("Erreur !.\n"
-                            "Click Cancel to exit."), QMessageBox::Cancel);
-
-
-}*/
-
-
-
-/*void MainWindow::on_pb_modifier_clicked()
-{
-
-    QString type= ui->comboBoxtype->currentText();
-    QDate datev= ui->dateEdit->date();
-    int nb= ui->box_nb->text().toInt();
-    QDate datevv= ui->dateEdit2->date();
-bool test;
-
-  Vaccin v(type,nb,datev,datevv);
-
-           QItemSelectionModel *select = ui->tabvaccin->selectionModel();
+    Panne pp;
+           QItemSelectionModel *select = ui->tabpanne->selectionModel();
            QModelIndexList list;
            if(select->hasSelection())
            list=select->selectedRows();
-           for(int i=0; i< list.count(); i++)
-           {
-                test=v.modifier(list[i].data().toInt());
-           }
+           for( int i=0; i< list.count(); i++)
+             {  QMessageBox::StandardButton replyy;
+           replyy = QMessageBox::question(this, "Supprimer Panne", "Vous etes sure?",
+                                         QMessageBox::Yes|QMessageBox::No);
+           if (replyy == QMessageBox::Yes) {
+             pp.supprimer(list[i].data().toInt());
+             ui->tabpanne->setModel(tmppanne.afficher());//refresh
+             ui->comboBox_4->setModel(tmppanne.afficher());
 
-  if(test)
+             QMessageBox::information(nullptr, QObject::tr("Supprimer un Panne"),
+                               QObject::tr("Panne supprimée.\n"
+                                           "Click Cancel to exit."), QMessageBox::Cancel);}}}
+
+void MainWindow::on_pb_modifier_equipement_clicked()
 {
+    int numserie= ui->lineEdit_numserie->text().toInt();
+        QString type= ui->comboBox_2->currentText();
+        QString marque= ui->lineEdit_marque->text();
+        QString disponibilite= ui->comboBox->currentText();
 
-      ui->tabvaccin->setModel(tmpvaccin.afficher());//refresh
-QMessageBox::information(nullptr, QObject::tr("Modifier un vaccin"),
-                  QObject::tr("Vaccin modifié.\n"
-                              "Click Cancel to exit."), QMessageBox::Cancel);
-
-
-}
-  else
-      QMessageBox::critical(nullptr, QObject::tr("Ajouter un vaccin"),
-                  QObject::tr("Erreur !.\n"
-                              "Click Cancel to exit."), QMessageBox::Cancel);
-}*/
-
-
-
-//tris
-void MainWindow::on_pb_ask_clicked()
-{
-     ui->tabvaccin->setModel(tmpvaccin.triee(0));
-}
-
-void MainWindow::on_pb_decr_clicked()
-{
-     ui->tabvaccin->setModel(tmpvaccin.triee(1));
-}
-
-void MainWindow::on_pb_d2desc_clicked()
-{
-    ui->tabvaccin->setModel(tmpvaccin.triee(3));
-
+    Equipement p;
+    bool atout=p.modifier(numserie,type,marque,disponibilite);
+    if(atout)
+    {ui->tabequipement->setModel(tmpequipement.afficher());
+         ui->comboBox_5->setModel(tmpequipement.afficherI());//refresh
+        QMessageBox::information(nullptr, QObject::tr("Modifier un Equipement"),
+                                 QObject::tr("Equipement modifié.\n"
+                                             "Click Cancel to exit."), QMessageBox::Cancel);}
+    else
+        QMessageBox::critical(nullptr, QObject::tr("Modifier un Equipement"),
+                              QObject::tr("Erreur !.\n"
+                                          "Click Cancel to exit."), QMessageBox::Cancel);
 }
 
-void MainWindow::on_pb_d2asc_clicked()
+void MainWindow::on_pb_modifier_panne_clicked()
 {
-    ui->tabvaccin->setModel(tmpvaccin.triee(2));
+    int id = ui->lineEdit_ID->text().toInt();
+       double numserie= ui->lineEdit_numseriep->text().toInt();
 
-}
-//recherche
-void MainWindow::on_rechercher_clicked()
-{
-    Vaccin v;
-    QString arg1=ui->lineEdit_idd->text();
-    QString arg2=ui->linee->text();
+       double prix= ui->lineEdit_prix->text().toInt();
+       int duree= ui->lineEdit_duree->text().toInt();
 
-        if ((arg1=="")&&(arg2==""))
-        ui->tabvaccin->setModel(v.afficher());
-        else if((arg1=="")&&(arg2!=""))
-        this->ui->tabvaccin->setModel(v.rechercher2(arg2));
-        else
-        this->ui->tabvaccin->setModel(v.rechercher(arg1));
-
-}
-//load
-void MainWindow::on_pushButton_clicked()
-{
-    ui->tabvaccin->setModel(tmpvaccin.afficher());
+    Panne p;
+    bool atout=p.modifier(id,numserie,prix,duree);
+    if(atout)
+    {ui->tabpanne->setModel(tmppanne.afficher());
+        QMessageBox::information(nullptr, QObject::tr("Modifier une Panne"),
+                                 QObject::tr("Panne modifié.\n"
+                                             "Click Cancel to exit."), QMessageBox::Cancel);}
+    else
+        QMessageBox::critical(nullptr, QObject::tr("Modifier une Panne"),
+                              QObject::tr("Erreur !.\n"
+                                          "Click Cancel to exit."), QMessageBox::Cancel);
 }
 
-//champs
-void MainWindow::on_tabvaccin_activated(const QModelIndex &index)
+void MainWindow::on_comboBox_3_currentIndexChanged(int index)
 {
+    QSqlQuery query;
+    int numserie=ui->comboBox_3->currentText().toInt();
+ query.prepare("select * from equipement where numserie = :numserie");
+        query.bindValue(":numserie",numserie);
+ if(query.exec()){
+  while(query.next()){
 
-    QString val= ui->tabvaccin->model()->data(index).toString();
-        QSqlQuery query;
-        query.prepare("select * from vaccin where IDV= '"+val+"' ");
-        if(query.exec())
-        {
-            while(query.next())
-            {
-                ui->comboBoxtype->setCurrentText(query.value(0).toString());
-                ui->box_nb->setValue(query.value(1).toString().toInt());
-                ui->dateEdit->setDate(query.value(2).toDate());
-                ui->dateEdit->setDate(query.value(4).toDate());
-                ui->lineEdit->setText(query.value(3).toString());
-                //ui->lineEdit_id_2->setText(query.value(0).toString());
+            ui->lineEdit_numserie->setText(query.value(0).toString());
+             qDebug()<<query.value(0).toString();
+              ui->comboBox_2->clear();
+
+             ui->comboBox_2->addItem(query.value(1).toString());
+
+             if((query.value(1).toString())=="Transport")
+             {
+
+                         ui->comboBox_2->addItem("Agriculture");}
+             else
+             {
+              ui->comboBox_2->addItem("Transport");}
+ //qDebug ("here");
+ ui->lineEdit_marque->setText(query.value(2).toString());
+              ui->comboBox->clear();
+              ui->comboBox->addItem(query.value(3).toString());
+              if((query.value(3).toString())=="Disponible")
+              {
+
+                          ui->comboBox->addItem("non"); }
+              else
+              {
+               ui->comboBox->addItem("Disponible");}}}}
+
+void MainWindow::on_comboBox_4_currentIndexChanged(int ind)
+{
+    QSqlQuery query;
+       int numserie=ui->comboBox_4->currentText().toInt();
+
+    //ui->comboBox->currentText().toInt()
+        query.prepare("select * from panne where numserie = :numserie");
+            query.bindValue(":numserie",numserie);
+
+       // qDebug("yomkn here");
+        if(query.exec()){
+            //qDebug("mech here");
+            while(query.next()){
+    //qDebug("erreur");
+
+                 ui->lineEdit_ID->setText(query.value(1).toString());
+                ui->lineEdit_numseriep->setText(query.value(0).toString());
+
+                 qDebug()<<query.value(0).toString();
+
+                 ui->lineEdit_prix->setText(query.value(2).toString());
+ui->lineEdit_duree->setText(query.value(3).toString());
+
+
+
             }
         }
-        else
-            QMessageBox::information(nullptr, QObject::tr("Modifier un compte"),
-                              QObject::tr("erreur.\n"
-                                          "Click Cancel to exit."), QMessageBox::Cancel);
-  }
+}
+void MainWindow::on_pb_charger_equipement_clicked()
+
+    {
+    ui->tabequipement->setModel(tmpequipement.afficher());
+    ui->comboBox_3->setModel(tmpequipement.afficher());
+}
+
+
+
+void MainWindow::on_pb_charger_panne_clicked()
+{
+    ui->tabpanne->setModel(tmppanne.afficher());
+    ui->comboBox_4->setModel(tmppanne.afficher());
+}
+
+void MainWindow::on_comboBox_5_currentIndexChanged(int index)
+{
+    QSqlQuery query;
+    int numserie=ui->comboBox_5->currentText().toInt();
+    query.prepare("select * from equipement where numserie = :numserie");
+        query.bindValue(":numserie",numserie);
+
+   // qDebug("yomkn here");
+    if(query.exec()){
+        //qDebug("mech here");
+        while(query.next()){
+//qDebug("erreur");
+           //ui->comboBox->addItem(query.value(0).toString());
+
+            ui->lineEdit_numseriep->setText(query.value(0).toString());
+
+}}}
+
+void MainWindow::on_printe_clicked()
+{
+    QPrinter printer(QPrinter::HighResolution);
+    QPrintDialog dlg(&printer, this);
+    if (dlg.exec() == QDialog::Accepted)
+    {
+        // calculate the total width/height table would need without scaling
+        const int rows = ui->tabequipement->model()->rowCount();
+        const int cols = ui->tabequipement->model()->columnCount();
+        double totalWidth = 0.0;
+        for (int c = 0; c < cols; ++c)
+        {
+            totalWidth += ui->tabequipement->columnWidth(c);
+        }
+        double totalHeight = 0.0;
+        for (int r = 0; r < rows; ++r)
+        {
+            totalHeight += ui->tabequipement->rowHeight(r);
+        }
+
+
+        // redirect table's painting on a pixmap
+        QPixmap pixmap(totalWidth, totalHeight);
+        QPainter::setRedirected(ui->tabequipement->viewport(), &pixmap);
+        QPaintEvent event(QRect(0, 0, totalWidth, totalHeight));
+        QApplication::sendEvent(ui->tabequipement->viewport(), &event);
+        QPainter::restoreRedirected(ui->tabequipement->viewport());
+
+        // print scaled pixmap
+        QPainter painter(&printer);
+        painter.drawPixmap(printer.pageRect(), pixmap, pixmap.rect());
+
+}}
+
+void MainWindow::on_printp_clicked()
+{
+    QPrinter printer(QPrinter::HighResolution);
+    QPrintDialog dlg(&printer, this);
+    if (dlg.exec() == QDialog::Accepted)
+    {
+        // calculate the total width/height table would need without scaling
+        const int rows = ui->tabpanne->model()->rowCount();
+        const int cols = ui->tabpanne->model()->columnCount();
+        double totalWidth = 0.0;
+        for (int c = 0; c < cols; ++c)
+        {
+            totalWidth += ui->tabpanne->columnWidth(c);
+        }
+        double totalHeight = 0.0;
+        for (int r = 0; r < rows; ++r)
+        {
+            totalHeight += ui->tabpanne->rowHeight(r);
+        }
+
+        // redirect table's painting on a pixmap
+        QPixmap pixmap(totalWidth, totalHeight);
+        QPainter::setRedirected(ui->tabpanne->viewport(), &pixmap);
+        QPaintEvent event(QRect(0, 0, totalWidth, totalHeight));
+        QApplication::sendEvent(ui->tabpanne->viewport(), &event);
+        QPainter::restoreRedirected(ui->tabpanne->viewport());
+
+        // print scaled pixmap
+        QPainter painter(&printer);
+        painter.drawPixmap(printer.pageRect(), pixmap, pixmap.rect());
+
+
+}
+}
+
+void MainWindow::on_radioButton_clicked()
+{
+    ui->tabequipement->setModel(tmpequipement.triee(0));
+}
+
+void MainWindow::on_radioButton_8_clicked()
+{
+    ui->tabequipement->setModel(tmpequipement.triee(1));
+}
+
+void MainWindow::on_radioButton_2_clicked()
+{
+    ui->tabpanne->setModel(tmppanne.triepn(0));
+}
+
+void MainWindow::on_radioButton_3_clicked()
+{
+    ui->tabpanne->setModel(tmppanne.triepn(1));
+}
+
+void MainWindow::on_radioButton_4_clicked()
+{
+    ui->tabpanne->setModel(tmppanne.triepp(0));
+}
+
+void MainWindow::on_radioButton_5_clicked()
+{
+    ui->tabpanne->setModel(tmppanne.triepp(1));
+}
+
+void MainWindow::on_radioButton_6_clicked()
+{
+    ui->tabpanne->setModel(tmppanne.triepd(0));
+}
+
+void MainWindow::on_radioButton_7_clicked()
+{
+    ui->tabpanne->setModel(tmppanne.triepd(1));
+}
+
+void MainWindow::on_lineEdit_textChanged(const QString &arg1)
+{
+    QString str=ui->lineEdit->text();
+
+    ui->tabequipement->setModel(tmpequipement.cherchere(str));
+}
+
+void MainWindow::on_lineEdit_2_textChanged(const QString &arg1)
+{
+
+    QString str=ui->lineEdit_2->text();
+
+    ui->tabpanne->setModel(tmppanne.chercherp(str));}
